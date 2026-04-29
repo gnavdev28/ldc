@@ -83,7 +83,6 @@ void cloneBlocks(const std::vector<llvm::BasicBlock *> &srcblocks,
                  llvm::BasicBlock *continueWith, llvm::BasicBlock *unwindTo,
                  llvm::Value *funclet) {
   llvm::ValueToValueMapTy VMap;
-  
   // map the terminal branch to the new target
   if (continueWith) {
     if (auto term = srcblocks.back()->getTerminator()) {
@@ -119,7 +118,6 @@ void cloneBlocks(const std::vector<llvm::BasicBlock *> &srcblocks,
 
       newInst->insertInto(nbb, nbb->end());
       VMap[Inst] = newInst;
-      
       if (unwindTo)
         if (auto dest = getUnwindDest(Inst))
           VMap[dest] = unwindTo;
