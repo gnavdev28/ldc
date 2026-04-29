@@ -96,7 +96,7 @@ void cloneBlocks(const std::vector<llvm::BasicBlock *> &srcblocks,
   for (auto bb : srcblocks) {
     llvm::Function *F = bb->getParent();
     auto nbb = llvm::BasicBlock::Create(bb->getContext(), bb->getName());
-
+    // Loop over all instructions, and copy them over.
     for (auto &II : *bb) {
       llvm::Instruction *Inst = &II;
       llvm::Instruction *newInst = nullptr;
@@ -117,7 +117,7 @@ void cloneBlocks(const std::vector<llvm::BasicBlock *> &srcblocks,
         newInst = Inst->clone();
 
       newInst->insertInto(nbb, nbb->end());
-      VMap[Inst] = newInst;
+      VMap[Inst] = newInst; // Add instruction map to value.
       if (unwindTo)
         if (auto dest = getUnwindDest(Inst))
           VMap[dest] = unwindTo;
