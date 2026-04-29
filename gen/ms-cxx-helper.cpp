@@ -83,17 +83,21 @@ void cloneBlocks(const std::vector<llvm::BasicBlock *> &srcblocks,
                  llvm::BasicBlock *continueWith, llvm::BasicBlock *unwindTo,
                  llvm::Value *funclet) {
   llvm::ValueToValueMapTy VMap;
+  
   // map the terminal branch to the new target
-  if (continueWith)
-    if (auto term = srcblocks.back()->getTerminator())
-      if (auto succ = term->getSuccessor(0))
-        VMap[succ] = continueWith;
+  if (continueWith) {
+    if (auto term = srcblocks.back()->getTerminator()) {
+      // FIX: Ensure it is actually a terminator before checking successors
+      if (term->isTerminator() && term->getNumSuccessors() > 0) {
+        VMap[term->getSuccessor(0)] = continueWith;
+      }
+    }
+  }
 
   for (auto bb : srcblocks) {
     llvm::Function *F = bb->getParent();
-
     auto nbb = llvm::BasicBlock::Create(bb->getContext(), bb->getName());
-    // Loop over all instructions, and copy them over.
+
     for (auto &II : *bb) {
       llvm::Instruction *Inst = &II;
       llvm::Instruction *newInst = nullptr;
@@ -114,8 +118,8 @@ void cloneBlocks(const std::vector<llvm::BasicBlock *> &srcblocks,
         newInst = Inst->clone();
 
       newInst->insertInto(nbb, nbb->end());
-
-      VMap[Inst] = newInst; // Add instruction map to value.
+      VMap[Inst] = newInst;
+      
       if (unwindTo)
         if (auto dest = getUnwindDest(Inst))
           VMap[dest] = unwindTo;
